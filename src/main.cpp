@@ -12,6 +12,10 @@ int led = 2;
 // Grove GSR Sensor Pins
 int groveGsr = A0;
 
+// GY-906 Infrared Sensor Pins
+int gy906Scl = D5;
+int gy906Sda = D7;
+
 void setup() {
   Serial.begin(9600);
 

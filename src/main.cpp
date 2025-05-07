@@ -9,6 +9,9 @@
 
 int led = 2;
 
+// Grove GSR Sensor Pins
+int groveGsr = A0;
+
 void setup() {
   Serial.begin(9600);
 
@@ -26,6 +29,8 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   pinMode(led, OUTPUT);
+
+  pinMode(groveGsr, INPUT);
 
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
@@ -51,7 +56,10 @@ void setup() {
 
 void loop() {
   digitalWrite(led, HIGH);
-  delay(100);
+  // delay(100);
   digitalWrite(led, LOW);
-  delay(100);
+  // delay(100);
+
+  float sensorValue = analogRead(groveGsr);
+  Serial.println(sensorValue);
 }

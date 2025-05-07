@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
+#include <Wire.h>
+#include <SparkFunMLX90614.h>
 #include <env.h>
 
 // Library for disabling brownout connector
@@ -35,6 +37,7 @@ void setup() {
   pinMode(led, OUTPUT);
 
   pinMode(groveGsr, INPUT);
+  
 
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;

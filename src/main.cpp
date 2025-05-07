@@ -35,10 +35,10 @@ void setup() {
   pinMode(led, OUTPUT);
 
   pinMode(groveGsr, INPUT);
-  if (gy906.begin() == false){ // Can take a while to initialize. Rewrite this to wait until it's ready.
-    Serial.println("Qwiic IR thermometer did not acknowledge! Freezing!");
-    while(1);
-  }
+  // if (gy906.begin() == false){ // Can take a while to initialize. Rewrite this to wait until it's ready.
+  //   Serial.println("Qwiic IR thermometer did not acknowledge! Freezing!");
+  //   while(1);
+  // }
 
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
@@ -70,5 +70,5 @@ void loop() {
 
   // float sensorValue = analogRead(groveGsr);
   // Serial.println(sensorValue);
-  Serial.println(gy906.readObjectTempC());
+  // Serial.println(gy906.readObjectTempC());
 }

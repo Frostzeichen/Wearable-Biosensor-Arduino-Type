@@ -60,6 +60,6 @@ void loop() {
   digitalWrite(led, LOW);
   delay(100);
 
-  float sensorValue = analogRead(groveGsr);
-  Serial.println(sensorValue);
+  // float sensorValue = analogRead(groveGsr);
+  // Serial.println(sensorValue);
 }

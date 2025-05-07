@@ -56,9 +56,9 @@ void setup() {
 
 void loop() {
   digitalWrite(led, HIGH);
-  // delay(100);
+  delay(100);
   digitalWrite(led, LOW);
-  // delay(100);
+  delay(100);
 
   float sensorValue = analogRead(groveGsr);
   Serial.println(sensorValue);

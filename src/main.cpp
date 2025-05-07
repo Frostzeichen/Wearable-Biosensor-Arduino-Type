@@ -31,9 +31,11 @@ void setup() {
 
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
-    WiFiClient client;
+    WiFiClientSecure client;
 
-    http.begin(client, "http://192.168.254.125:3000/"); // Replace with your URL
+    client.setInsecure();
+
+    http.begin(client, "https://esrand-embedded-systems-rest-api-ne-git-d922e1-terenzs-projects.vercel.app/"); // Replace with your URL
     int httpResponseCode = http.GET(); // Send the request
 
     if (httpResponseCode > 0) {

@@ -1,8 +1,7 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
-#include <Wire.h>
-#include <SparkFunMLX90614.h>
+#include <Adafruit_MLX90614.h>
 #include <env.h>
 
 // Library for disabling brownout connector
@@ -14,9 +13,8 @@ int led = 2;
 // Grove GSR Sensor Pins
 int groveGsr = A0;
 
-// GY-906 Infrared Sensor Pins
-int gy906Scl = D5;
-int gy906Sda = D7;
+// GY-906 Infrared Sensor
+Adafruit_MLX90614 gy906 = Adafruit_MLX90614();
 
 void setup() {
   Serial.begin(9600);
@@ -37,7 +35,10 @@ void setup() {
   pinMode(led, OUTPUT);
 
   pinMode(groveGsr, INPUT);
-  
+  if (gy906.begin() == false){ // Can take a while to initialize. Rewrite this to wait until it's ready.
+    Serial.println("Qwiic IR thermometer did not acknowledge! Freezing!");
+    while(1);
+  }
 
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
@@ -69,4 +70,5 @@ void loop() {
 
   // float sensorValue = analogRead(groveGsr);
   // Serial.println(sensorValue);
+  Serial.println(gy906.readObjectTempC());
 }

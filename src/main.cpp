@@ -1,13 +1,11 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
+#include <env.h>
 
 // Library for disabling brownout connector
 // #include "soc/soc.h"
 // #include "soc/rtc_cntl_reg.h"
-
-char wSsid[] = "GlobeAtHome_F3398";
-char wPassword[] = "AC1656F1";
 
 int led = 2;
 
@@ -35,7 +33,7 @@ void setup() {
 
     client.setInsecure();
 
-    http.begin(client, "https://esrand-embedded-systems-rest-api-ne-git-d922e1-terenzs-projects.vercel.app/"); // Replace with your URL
+    http.begin(client, apiUrlEsrand); // Replace with your URL
     int httpResponseCode = http.GET(); // Send the request
 
     if (httpResponseCode > 0) {

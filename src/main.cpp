@@ -2,6 +2,8 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <Adafruit_MLX90614.h>
+#include <Wire.h>
+#include <MAX30105.h>
 #include <env.h>
 
 // Library for disabling brownout connector
@@ -15,6 +17,15 @@ int groveGsr = A0;
 
 // GY-906 Infrared Sensor
 Adafruit_MLX90614 gy906 = Adafruit_MLX90614();
+
+// MAX30105 Pulse Oximeter
+MAX30105 max30105;
+const byte RATE_SIZE = 4;
+byte rates[RATE_SIZE];
+byte rateSpot = 0;
+long lastBeat = 0;
+float beatsPerMinute;
+int beatAvg;
 
 void setup() {
   Serial.begin(9600);
@@ -35,10 +46,21 @@ void setup() {
   pinMode(led, OUTPUT);
 
   pinMode(groveGsr, INPUT);
-  // if (gy906.begin() == false){ // Can take a while to initialize. Rewrite this to wait until it's ready.
-  //   Serial.println("Qwiic IR thermometer did not acknowledge! Freezing!");
-  //   while(1);
-  // }
+  if (!gy906.begin()) {
+    Serial.println("GY-906 IR thermometer did not acknowledge! Freezing!");
+    while (!gy906.begin()) {
+      Serial.print(".");
+      delay(100);
+    }
+  }
+
+  if (!max30105.begin(Wire, I2C_SPEED_FAST)) {
+    Serial.println("MAX30105 did not acknowledge! Freezing!");
+    while (!max30105.begin()) {
+      Serial.print(".");
+      delay(100);
+    }
+  }
 
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
@@ -70,5 +92,76 @@ void loop() {
 
   // float sensorValue = analogRead(groveGsr);
   // Serial.println(sensorValue);
-  // Serial.println(gy906.readObjectTempC());
+  Serial.println(gy906.readObjectTempC());
+  
+  max30105.setup();
+  max30105.setPulseAmplitudeRed(0x0A);
+  max30105.setPulseAmplitudeGreen(0);
+
+  long irValue = max30105.getIR();
+
+  if (irValue > 50000) {
+    //We sensed a beat!
+    long delta = millis() - lastBeat;
+    lastBeat = millis();
+
+    beatsPerMinute = 60 / (delta / 1000.0);
+
+    if (beatsPerMinute < 255 && beatsPerMinute > 20)
+    {
+      rates[rateSpot++] = (byte)beatsPerMinute; //Store this reading in the array
+      rateSpot %= RATE_SIZE; //Wrap variable
+
+      //Take average of readings
+      beatAvg = 0;
+      for (byte x = 0 ; x < RATE_SIZE ; x++)
+        beatAvg += rates[x];
+      beatAvg /= RATE_SIZE;
+    }
+  }
+
+  Serial.print("IR=");
+  Serial.print(irValue);
+  Serial.print(", BPM=");
+  Serial.print(beatsPerMinute);
+  Serial.print(", Avg BPM=");
+  Serial.print(beatAvg);
+
+  if (irValue < 50000)
+    Serial.print(" No finger?");
+
+  max30105.shutDown();
+
+  Serial.println();
+
+  byte error, address;
+  int nDevices;
+  Serial.println("Scanning...");
+  nDevices = 0;
+  for(address = 1; address < 127; address++ ) {
+    Wire.beginTransmission(address);
+    error = Wire.endTransmission();
+    if (error == 0) {
+      Serial.print("I2C device found at address 0x");
+      if (address<16) {
+        Serial.print("0");
+      }
+      Serial.println(address,HEX);
+      nDevices++;
+    }
+    else if (error==4) {
+      Serial.print("Unknow error at address 0x");
+      if (address<16) {
+        Serial.print("0");
+      }
+      Serial.println(address,HEX);
+    }    
+  }
+  if (nDevices == 0) {
+    Serial.println("No I2C devices found\n");
+  }
+  else {
+    Serial.println("done\n");
+  }
+  delay(5000);          
 }

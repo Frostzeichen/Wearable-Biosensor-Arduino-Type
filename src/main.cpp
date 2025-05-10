@@ -44,31 +44,45 @@ void rWifi() {
   Serial.println(WiFi.localIP());
 }
 
+void rSetupAd8232() {
+  pinMode(ad8232, INPUT);
+}
+
+void rSetupGroveGsr() {
+  pinMode(groveGsr, INPUT);
+}
+
+void rSetupGy906() {
+  if (!gy906.begin()) {
+    Serial.println("GY-906 IR thermometer did not acknowledge! Freezing!");
+    while (!gy906.begin()) {
+      Serial.print(".");
+      delay(100);
+    }
+  }
+}
+
+void rSetupMax30105() {
+  if (!max30105.begin(Wire, I2C_SPEED_FAST)) {
+    Serial.println("MAX30105 pulse oximeter did not acknowledge! Freezing!");
+    while (!max30105.begin(Wire, I2C_SPEED_FAST)) {
+      Serial.print(".");
+      delay(100);
+    }
+  }
+}
+
 void setup() {
   Serial.begin(9600);
   delay(5000); // add delay for slow serial race condition
 
   rWifi();
-
   pinMode(led, OUTPUT);
 
-  pinMode(ad8232, INPUT);
-  // pinMode(groveGsr, INPUT);
-  // if (!gy906.begin()) {
-  //   Serial.println("GY-906 IR thermometer did not acknowledge! Freezing!");
-  //   while (!gy906.begin()) {
-  //     Serial.print(".");
-  //     delay(100);
-  //   }
-  // }
-
-  // if (!max30105.begin(Wire, I2C_SPEED_FAST)) {
-  //   Serial.println("MAX30105 did not acknowledge! Freezing!");
-  //   while (!max30105.begin()) {
-  //     Serial.print(".");
-  //     delay(100);
-  //   }
-  // }
+  rSetupAd8232();
+  rSetupGroveGsr();
+  rSetupMax30105();
+  rSetupGy906();
 
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;

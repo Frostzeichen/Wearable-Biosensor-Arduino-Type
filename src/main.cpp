@@ -48,6 +48,7 @@ void setup() {
 
   pinMode(led, OUTPUT);
 
+  pinMode(ad8232, INPUT);
   // pinMode(groveGsr, INPUT);
   // if (!gy906.begin()) {
   //   Serial.println("GY-906 IR thermometer did not acknowledge! Freezing!");
@@ -92,6 +93,7 @@ void loop() {
   delay(100);
   digitalWrite(led, LOW);
   delay(100);
+  Serial.println(analogRead(ad8232));
 
   // float sensorValue = analogRead(groveGsr);
   // Serial.println(sensorValue);

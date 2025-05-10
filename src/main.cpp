@@ -107,6 +107,7 @@ void setup() {
   // rSetupMax30105();
   // rSetupGy906();
 
+  rSendHttpRequest();
 }
 
 void loop() {

@@ -10,6 +10,8 @@
 // #include "soc/rtc_cntl_reg.h"
 
 int led = 8;
+char bReadings[8][1080];
+int readingsCount = 0;
 
 // Grove GSR Sensor Pins
 int groveGsr = A0;
@@ -120,7 +122,7 @@ void setup() {
   // rSetupMax30105();
   // rSetupGy906();
 
-  rSendHttpRequest("hehe~");
+  rSendHttpRequest("");
 }
 
 void loop() {
@@ -129,11 +131,20 @@ void loop() {
   digitalWrite(led, LOW);
   delay(100);
 
-  Serial.println("ad8232: " + String(sAd8232()));
-  Serial.println("groveGsr: " + String(sGroveGsr()));
-
   char data[1080];
   sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d}", sAd8232(), sGroveGsr());
+
+  if (readingsCount < 8) {
+    strcpy(bReadings[readingsCount], data);
+    readingsCount++;
+  } else {
+    for (int i = 0; i < readingsCount - 1; i++) {
+      Serial.println(bReadings[i]);
+      bReadings[i][0] = '\0';
+    }
+    readingsCount = 0;
+  }
+  
   // rSendHttpRequest(data);
 
   // Serial.println(gy906.readObjectTempC());

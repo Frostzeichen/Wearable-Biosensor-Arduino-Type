@@ -9,7 +9,7 @@
 // #include "soc/soc.h"
 // #include "soc/rtc_cntl_reg.h"
 
-int led = 2;
+int led = 8;
 
 // Grove GSR Sensor Pins
 int groveGsr = A0;

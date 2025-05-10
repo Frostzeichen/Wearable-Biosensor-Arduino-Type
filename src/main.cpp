@@ -72,14 +72,19 @@ void rSetupMax30105() {
   }
 }
 
-void rSendHttpRequest() {
+void rSendHttpRequest(char payload[1080]) {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     WiFiClientSecure client;
 
     client.setInsecure();
 
-    http.begin(client, apiUrlEsrand); // Replace with your URL
+    char url[1080];
+    strcpy(url, apiUrlEsrand);
+    strcat(url, payload);
+
+    http.begin(client, url); // Replace with your URL
+    Serial.println(url);
     int httpResponseCode = http.GET(); // Send the request
 
     if (httpResponseCode > 0) {
@@ -115,7 +120,7 @@ void setup() {
   // rSetupMax30105();
   // rSetupGy906();
 
-  rSendHttpRequest();
+  rSendHttpRequest("hehe~");
 }
 
 void loop() {
@@ -126,6 +131,10 @@ void loop() {
 
   Serial.println("ad8232: " + String(sAd8232()));
   Serial.println("groveGsr: " + String(sGroveGsr()));
+
+  char data[1080];
+  sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d}", sAd8232(), sGroveGsr());
+  // rSendHttpRequest(data);
 
   // Serial.println(gy906.readObjectTempC());
   

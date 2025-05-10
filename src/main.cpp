@@ -29,9 +29,7 @@ int beatAvg;
 // AD8232 Heart Rate Monitor
 int ad8232 = A0;
 
-void setup() {
-  Serial.begin(9600);
-
+void rWifi() {
   WiFi.begin(wSsid, wPassword);
 
   Serial.print("Connecting to WiFi router");
@@ -44,6 +42,13 @@ void setup() {
 
   Serial.print("Connected! @ address: ");
   Serial.println(WiFi.localIP());
+}
+
+void setup() {
+  Serial.begin(9600);
+  delay(5000); // add delay for slow serial race condition
+
+  rWifi();
 
   pinMode(led, OUTPUT);
 
@@ -92,7 +97,7 @@ void loop() {
   delay(100);
   digitalWrite(led, LOW);
   delay(100);
-  Serial.println(analogRead(ad8232));
+  // Serial.println(analogRead(ad8232));
 
   // float sensorValue = analogRead(groveGsr);
   // Serial.println(sensorValue);

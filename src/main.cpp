@@ -72,18 +72,7 @@ void rSetupMax30105() {
   }
 }
 
-void setup() {
-  Serial.begin(9600);
-  delay(5000); // add delay for slow serial race condition
-
-  rWifi();
-  pinMode(led, OUTPUT);
-
-  rSetupAd8232();
-  rSetupGroveGsr();
-  // rSetupMax30105();
-  // rSetupGy906();
-
+void rSendHttpRequest() {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     WiFiClientSecure client;
@@ -104,6 +93,20 @@ void setup() {
     
     http.end(); // Free resources
   }
+}
+
+void setup() {
+  Serial.begin(9600);
+  delay(5000); // add delay for slow serial race condition
+
+  rWifi();
+  pinMode(led, OUTPUT);
+
+  rSetupAd8232();
+  rSetupGroveGsr();
+  // rSetupMax30105();
+  // rSetupGy906();
+
 }
 
 void loop() {

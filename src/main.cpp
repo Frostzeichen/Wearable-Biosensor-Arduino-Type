@@ -127,8 +127,6 @@ void loop() {
   Serial.println("ad8232: " + String(sAd8232()));
   Serial.println("groveGsr: " + String(sGroveGsr()));
 
-  // float sensorValue = analogRead(groveGsr);
-  // Serial.println(sensorValue);
   // Serial.println(gy906.readObjectTempC());
   
   // max30105.setup();

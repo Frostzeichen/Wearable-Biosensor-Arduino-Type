@@ -27,7 +27,7 @@ float beatsPerMinute;
 int beatAvg;
 
 // AD8232 Heart Rate Monitor
-int ad8232 = A0;
+int ad8232 = A1;
 
 void rWifi() {
   WiFi.begin(wSsid, wPassword);

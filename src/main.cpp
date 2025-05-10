@@ -99,8 +99,8 @@ int sAd8232() {
   return analogRead(ad8232);
 }
 
-double sGroveGsr() {
-  return gy906.readObjectTempC();
+int sGroveGsr() {
+  return analogRead(groveGsr);
 }
 
 void setup() {

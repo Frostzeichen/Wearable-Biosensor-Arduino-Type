@@ -81,8 +81,8 @@ void setup() {
 
   rSetupAd8232();
   rSetupGroveGsr();
-  rSetupMax30105();
-  rSetupGy906();
+  // rSetupMax30105();
+  // rSetupGy906();
 
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;

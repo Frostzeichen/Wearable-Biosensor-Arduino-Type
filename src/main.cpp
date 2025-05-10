@@ -95,6 +95,14 @@ void rSendHttpRequest() {
   }
 }
 
+int sAd8232() {
+  return analogRead(ad8232);
+}
+
+double sGroveGsr() {
+  return gy906.readObjectTempC();
+}
+
 void setup() {
   Serial.begin(9600);
   delay(5000); // add delay for slow serial race condition
@@ -115,7 +123,9 @@ void loop() {
   delay(100);
   digitalWrite(led, LOW);
   delay(100);
-  // Serial.println(analogRead(ad8232));
+
+  Serial.println("ad8232: " + String(sAd8232()));
+  Serial.println("groveGsr: " + String(sGroveGsr()));
 
   // float sensorValue = analogRead(groveGsr);
   // Serial.println(sensorValue);

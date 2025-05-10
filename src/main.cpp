@@ -1,6 +1,5 @@
 #include <Arduino.h>
-#include <ESP8266WiFi.h>
-#include <ESP8266HTTPClient.h>
+#include <HTTPClient.h>
 #include <Adafruit_MLX90614.h>
 #include <Wire.h>
 #include <MAX30105.h>

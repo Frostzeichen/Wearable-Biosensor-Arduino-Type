@@ -11,7 +11,7 @@
 // #include "soc/rtc_cntl_reg.h"
 
 int led = 8;
-char bReadings[8][1080];
+char bReadings[8][270];
 int readingsCount = 0;
 
 // Grove GSR Sensor Pins
@@ -79,14 +79,14 @@ void rSetupMax30105() {
   }
 }
 
-void rSendHttpRequest(char payload[1080]) {
+void rSendHttpRequest(char payload[2048]) {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     WiFiClientSecure client;
 
     client.setInsecure();
 
-    char url[1080];
+    char url[2048];
     strcpy(url, apiUrlEsrand);
     strcat(url, payload);
 
@@ -167,23 +167,28 @@ void loop() {
   digitalWrite(led, LOW);
   delay(100);
 
-  char data[1080];
+  char data[270];
   // unsigned long now = getTime();
   // Serial.println(now);
   sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin));
 
-  if (readingsCount < 8) {
+  if (readingsCount < 4) {
     strcpy(bReadings[readingsCount], data);
     readingsCount++;
   } else {
-    DynamicJsonDocument jsonReadings(readingsCount * 1080);
+    char jsonReadings[readingsCount * 270];
+    strcpy(jsonReadings, "[");
     for (int i = 0; i < readingsCount - 1; i++) {
-      jsonReadings[i] = bReadings[i];
+      strcat(jsonReadings, bReadings[i]);
+      if (i == readingsCount - 2) {
+        strcat(jsonReadings, "]");
+      } else {
+        strcat(jsonReadings, ",");
+      }
       bReadings[i][0] = '\0';
     }
-    char nonConstPayload[readingsCount * 1080];
-    strcpy(nonConstPayload, jsonReadings.as<String>().c_str());
-    rSendHttpRequest(nonConstPayload);
+    rSendHttpRequest(jsonReadings);
+
     readingsCount = 0;
   }
   

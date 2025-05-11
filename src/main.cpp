@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <HTTPClient.h>
+#include <ArduinoJson.h>
 #include <Adafruit_MLX90614.h>
 #include <Wire.h>
 #include <MAX30105.h>
@@ -175,10 +176,14 @@ void loop() {
     strcpy(bReadings[readingsCount], data);
     readingsCount++;
   } else {
+    DynamicJsonDocument jsonReadings(readingsCount * 1080);
     for (int i = 0; i < readingsCount - 1; i++) {
-      Serial.println(bReadings[i]);
+      jsonReadings[i] = bReadings[i];
       bReadings[i][0] = '\0';
     }
+    char nonConstPayload[readingsCount * 1080];
+    strcpy(nonConstPayload, jsonReadings.as<String>().c_str());
+    rSendHttpRequest(nonConstPayload);
     readingsCount = 0;
   }
   

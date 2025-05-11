@@ -31,6 +31,10 @@ int beatAvg;
 // AD8232 Heart Rate Monitor
 int ad8232 = A1;
 
+// For analog calibration
+// This is a floating pin used for measuring changes in nearby magnetic waves and
+// readings in analog noise.
+int analogCalibrationPin = A3;
 void rWifi() {
   WiFi.begin(wSsid, wPassword);
 
@@ -110,12 +114,42 @@ int sGroveGsr() {
   return analogRead(groveGsr);
 }
 
+unsigned long getTime() {
+  time_t now;
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo)) {
+    //Serial.println("Failed to obtain time");
+    return(0);
+  }
+  time(&now);
+  return now;
+}
+
+boolean initTime() {
+  struct tm timeinfo;
+
+  log_i("Synchronizing time.");
+  // Connect to NTP server with 0 TZ offset, call setTimezone() later
+  configTime(0, 0, "pool.ntp.org");
+  // getLocalTime uses a default timeout of 5s -> the loop takes at most 3*5s to complete
+  for (int i = 0; i < 3; i++) {
+    if (getLocalTime(&timeinfo)) {
+      log_i("UTC time: %s.", getCurrentTimestamp(SYSTEM_TIMESTAMP_FORMAT).c_str());
+      return true;
+    }
+  }
+
+  log_e("Failed to obtain time.");
+  return false;
+}
+
 void setup() {
   Serial.begin(9600);
   delay(5000); // add delay for slow serial race condition
 
   rWifi();
   pinMode(led, OUTPUT);
+  pinMode(analogCalibrationPin, INPUT);
 
   rSetupAd8232();
   rSetupGroveGsr();
@@ -123,6 +157,7 @@ void setup() {
   // rSetupGy906();
 
   rSendHttpRequest("");
+  initTime();
 }
 
 void loop() {
@@ -132,7 +167,9 @@ void loop() {
   delay(100);
 
   char data[1080];
-  sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d}", sAd8232(), sGroveGsr());
+  // unsigned long now = getTime();
+  // Serial.println(now);
+  sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin));
 
   if (readingsCount < 8) {
     strcpy(bReadings[readingsCount], data);

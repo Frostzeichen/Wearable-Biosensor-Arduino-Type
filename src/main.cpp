@@ -144,6 +144,17 @@ boolean initTime() {
   return false;
 }
 
+void insertTwoChars(char *str, int pos, char a, char b, char c) {
+  int len = strlen(str);
+  for (int i = len; i >= pos; i--) {
+    str[i + 2] = str[i]; // shift right by 2
+  }
+
+  str[pos] = a;
+  str[pos + 1] = b;
+  str[pos + 2] = c;
+}
+
 void setup() {
   Serial.begin(9600);
   delay(5000); // add delay for slow serial race condition
@@ -157,8 +168,8 @@ void setup() {
   // rSetupMax30105();
   // rSetupGy906();
 
-  rSendHttpRequest("");
-  initTime();
+  // rSendHttpRequest("");
+  // initTime();
 }
 
 void loop() {
@@ -187,6 +198,41 @@ void loop() {
       }
       bReadings[i][0] = '\0';
     }
+
+    int loc = 0;
+    while (true) {
+      if (jsonReadings[loc] == '[') {
+        insertTwoChars(jsonReadings, loc, '%', '5', 'B');
+        loc += 3;
+      } else if (jsonReadings[loc]== ']') {
+        insertTwoChars(jsonReadings, loc, '%', '5', 'D');
+        loc += 3;
+      } else if (jsonReadings[loc]== '{') {
+        insertTwoChars(jsonReadings, loc, '%', '7', 'B');
+        loc += 3;
+      } else if (jsonReadings[loc]== '}') {
+        insertTwoChars(jsonReadings, loc, '%', '7', 'D');
+        loc += 3;
+      } else if (jsonReadings[loc]== ' ') {
+        insertTwoChars(jsonReadings, loc, '%', '2', '0');
+        loc += 3;
+      } else if (jsonReadings[loc]== '"') {
+        insertTwoChars(jsonReadings, loc, '%', '2', '2');
+        loc += 3;
+      } else if (jsonReadings[loc]== ':') {
+        insertTwoChars(jsonReadings, loc, '%', '3', 'A');
+        loc += 3;
+      } else if (jsonReadings[loc]== ',') {
+        insertTwoChars(jsonReadings, loc, '%', '2', 'C');
+        loc += 3;
+      } else if (jsonReadings[loc]== '\0') {
+        break;
+      } else {
+        loc++;
+      }
+    }
+
+    // Serial.println(jsonReadings);
     rSendHttpRequest(jsonReadings);
 
     readingsCount = 0;

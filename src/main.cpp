@@ -64,6 +64,8 @@ void rSetupGroveGsr() {
 
 void rSetupGy906() {
   digitalWrite(gy906EnablePin, HIGH);
+  digitalWrite(gy906EnablePin, LOW);
+  digitalWrite(gy906EnablePin, HIGH);
   if (!gy906.begin()) {
     Serial.println("GY-906 IR thermometer did not acknowledge! Freezing!");
     while (!gy906.begin()) {
@@ -75,9 +77,9 @@ void rSetupGy906() {
 }
 
 void rSetupMax30105() {
-  if (!max30105.begin(Wire, I2C_SPEED_FAST)) {
+  if (!max30105.begin()) {
     Serial.println("MAX30105 pulse oximeter did not acknowledge! Freezing!");
-    while (!max30105.begin(Wire, I2C_SPEED_FAST)) {
+    while (!max30105.begin()) {
       Serial.print(".");
       delay(100);
     }
@@ -177,6 +179,11 @@ void setup() {
 }
 
 void loop() {
+  digitalWrite(gy906EnablePin, HIGH);
+  delay(200); // Wait until sensor reaches proper 3.3V before reading.
+  float gy906Temp = gy906.readObjectTempC();
+  digitalWrite(gy906EnablePin, LOW);
+
   digitalWrite(led, HIGH);
   delay(100);
   digitalWrite(led, LOW);
@@ -185,7 +192,7 @@ void loop() {
   char data[270];
   // unsigned long now = getTime();
   // Serial.println(now);
-  sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d, \"time\": %lu, \"gy906\": %f}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin), getTime(), gy906.readObjectTempC());
+  sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d, \"time\": %lu, \"gy906\": %f}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin), getTime(), gy906Temp);
 
   if (readingsCount < 8) {
     strcpy(bReadings[readingsCount], data);
@@ -241,6 +248,8 @@ void loop() {
 
     readingsCount = 0;
   }
+
+  Serial.println();
   
   // rSendHttpRequest(data);
 

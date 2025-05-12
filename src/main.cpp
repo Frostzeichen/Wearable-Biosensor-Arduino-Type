@@ -24,6 +24,7 @@ Adafruit_MLX90614 gy906 = Adafruit_MLX90614();
 int gy906EnablePin = 10;
 
 // MAX30105 Pulse Oximeter
+int max30105EnablePin = 8;
 MAX30105 max30105;
 const byte RATE_SIZE = 4;
 byte rates[RATE_SIZE];

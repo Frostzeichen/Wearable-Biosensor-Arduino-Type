@@ -185,7 +185,7 @@ void loop() {
   char data[270];
   // unsigned long now = getTime();
   // Serial.println(now);
-  sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d, \"time\": %lu, \"gy906\": %d}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin), getTime(), gy906.readObjectTempC());
+  sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d, \"time\": %lu, \"gy906\": %f}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin), getTime(), gy906.readObjectTempC());
 
   if (readingsCount < 8) {
     strcpy(bReadings[readingsCount], data);

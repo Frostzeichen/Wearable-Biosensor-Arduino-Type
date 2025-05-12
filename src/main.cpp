@@ -228,8 +228,8 @@ void loop() {
     //   }
     // }
 
-    // Serial.println(jsonReadings);
-    rSendHttpRequest(jsonReadings);
+    Serial.println(jsonReadings);
+    // rSendHttpRequest(jsonReadings);
 
     readingsCount = 0;
   }

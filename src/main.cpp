@@ -86,13 +86,11 @@ void rSendHttpRequest(char payload[2048]) {
 
     client.setInsecure();
 
-    char url[2048];
-    strcpy(url, apiUrlEsrand);
-    strcat(url, payload);
-
-    http.begin(client, url); // Replace with your URL
-    Serial.println(url);
-    int httpResponseCode = http.GET(); // Send the request
+    http.begin(client, apiUrlEsrand); // Replace with your URL
+    Serial.println(apiUrlEsrand);
+    Serial.println(payload);
+    http.addHeader("Content-Type", "application/json");
+    int httpResponseCode = http.POST((uint8_t*)payload, strlen(payload));
 
     if (httpResponseCode > 0) {
       String payload = http.getString(); // Get the response payload
@@ -181,7 +179,7 @@ void loop() {
   // Serial.println(now);
   sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d, \"time\": %lu}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin), getTime());
 
-  if (readingsCount < 4) {
+  if (readingsCount < 8) {
     strcpy(bReadings[readingsCount], data);
     readingsCount++;
   } else {
@@ -197,41 +195,41 @@ void loop() {
       bReadings[i][0] = '\0';
     }
 
-    int loc = 0;
-    while (true) {
-      if (jsonReadings[loc] == '[') {
-        insertTwoChars(jsonReadings, loc, '%', '5', 'B');
-        loc += 3;
-      } else if (jsonReadings[loc]== ']') {
-        insertTwoChars(jsonReadings, loc, '%', '5', 'D');
-        loc += 3;
-      } else if (jsonReadings[loc]== '{') {
-        insertTwoChars(jsonReadings, loc, '%', '7', 'B');
-        loc += 3;
-      } else if (jsonReadings[loc]== '}') {
-        insertTwoChars(jsonReadings, loc, '%', '7', 'D');
-        loc += 3;
-      } else if (jsonReadings[loc]== ' ') {
-        insertTwoChars(jsonReadings, loc, '%', '2', '0');
-        loc += 3;
-      } else if (jsonReadings[loc]== '"') {
-        insertTwoChars(jsonReadings, loc, '%', '2', '2');
-        loc += 3;
-      } else if (jsonReadings[loc]== ':') {
-        insertTwoChars(jsonReadings, loc, '%', '3', 'A');
-        loc += 3;
-      } else if (jsonReadings[loc]== ',') {
-        insertTwoChars(jsonReadings, loc, '%', '2', 'C');
-        loc += 3;
-      } else if (jsonReadings[loc]== '\0') {
-        break;
-      } else {
-        loc++;
-      }
-    }
+    // int loc = 0;
+    // while (true) {
+    //   if (jsonReadings[loc] == '[') {
+    //     insertTwoChars(jsonReadings, loc, '%', '5', 'B');
+    //     loc += 3;
+    //   } else if (jsonReadings[loc]== ']') {
+    //     insertTwoChars(jsonReadings, loc, '%', '5', 'D');
+    //     loc += 3;
+    //   } else if (jsonReadings[loc]== '{') {
+    //     insertTwoChars(jsonReadings, loc, '%', '7', 'B');
+    //     loc += 3;
+    //   } else if (jsonReadings[loc]== '}') {
+    //     insertTwoChars(jsonReadings, loc, '%', '7', 'D');
+    //     loc += 3;
+    //   } else if (jsonReadings[loc]== ' ') {
+    //     insertTwoChars(jsonReadings, loc, '%', '2', '0');
+    //     loc += 3;
+    //   } else if (jsonReadings[loc]== '"') {
+    //     insertTwoChars(jsonReadings, loc, '%', '2', '2');
+    //     loc += 3;
+    //   } else if (jsonReadings[loc]== ':') {
+    //     insertTwoChars(jsonReadings, loc, '%', '3', 'A');
+    //     loc += 3;
+    //   } else if (jsonReadings[loc]== ',') {
+    //     insertTwoChars(jsonReadings, loc, '%', '2', 'C');
+    //     loc += 3;
+    //   } else if (jsonReadings[loc]== '\0') {
+    //     break;
+    //   } else {
+    //     loc++;
+    //   }
+    // }
 
-    Serial.println(jsonReadings);
-    // rSendHttpRequest(jsonReadings);
+    // Serial.println(jsonReadings);
+    rSendHttpRequest(jsonReadings);
 
     readingsCount = 0;
   }

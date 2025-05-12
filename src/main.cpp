@@ -129,18 +129,16 @@ unsigned long getTime() {
 boolean initTime() {
   struct tm timeinfo;
 
-  log_i("Synchronizing time.");
+  Serial.println("Synchronizing time.");
   // Connect to NTP server with 0 TZ offset, call setTimezone() later
-  configTime(0, 0, "pool.ntp.org");
-  // getLocalTime uses a default timeout of 5s -> the loop takes at most 3*5s to complete
-  for (int i = 0; i < 3; i++) {
-    if (getLocalTime(&timeinfo)) {
-      log_i("UTC time: %s.", getCurrentTimestamp(SYSTEM_TIMESTAMP_FORMAT).c_str());
-      return true;
-    }
+  configTime(0, 0, "time.google.com");
+  if (getLocalTime(&timeinfo)) {
+    Serial.println("Time synchronized.");
+    Serial.println("Current time is: " + String(asctime(&timeinfo)));
+    return true;
   }
 
-  log_e("Failed to obtain time.");
+  Serial.println("Failed to obtain time.");
   return false;
 }
 
@@ -169,7 +167,7 @@ void setup() {
   // rSetupGy906();
 
   // rSendHttpRequest("");
-  // initTime();
+  initTime();
 }
 
 void loop() {
@@ -181,7 +179,7 @@ void loop() {
   char data[270];
   // unsigned long now = getTime();
   // Serial.println(now);
-  sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin));
+  sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d, \"time\": %lu}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin), getTime());
 
   if (readingsCount < 4) {
     strcpy(bReadings[readingsCount], data);
@@ -232,8 +230,8 @@ void loop() {
       }
     }
 
-    // Serial.println(jsonReadings);
-    rSendHttpRequest(jsonReadings);
+    Serial.println(jsonReadings);
+    // rSendHttpRequest(jsonReadings);
 
     readingsCount = 0;
   }

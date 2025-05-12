@@ -13,6 +13,8 @@
 int led = 8;
 char bReadings[8][270];
 int readingsCount = 0;
+int sclPin = 6;
+int sdaPin = 5;
 
 // Grove GSR Sensor Pins
 int groveGsr = A0;
@@ -163,6 +165,8 @@ void setup() {
   pinMode(analogCalibrationPin, INPUT);
   pinMode(gy906EnablePin, OUTPUT);
 
+  Wire.begin(sdaPin, sclPin);
+
   rSetupAd8232();
   rSetupGroveGsr();
   rSetupGy906();
@@ -181,7 +185,7 @@ void loop() {
   char data[270];
   // unsigned long now = getTime();
   // Serial.println(now);
-  sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d, \"time\": %lu}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin), getTime());
+  sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d, \"time\": %lu, \"gy906\": %d}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin), getTime(), gy906.readObjectTempC());
 
   if (readingsCount < 8) {
     strcpy(bReadings[readingsCount], data);
@@ -240,8 +244,6 @@ void loop() {
   
   // rSendHttpRequest(data);
 
-  // Serial.println(gy906.readObjectTempC());
-  
   // max30105.setup();
   // max30105.setPulseAmplitudeRed(0x0A);
   // max30105.setPulseAmplitudeGreen(0);

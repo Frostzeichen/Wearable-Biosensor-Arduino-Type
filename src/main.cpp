@@ -65,8 +65,6 @@ void rSetupGroveGsr() {
 
 void rSetupGy906() {
   digitalWrite(gy906EnablePin, HIGH);
-  digitalWrite(gy906EnablePin, LOW);
-  digitalWrite(gy906EnablePin, HIGH);
   if (!gy906.begin()) {
     Serial.println("GY-906 IR thermometer did not acknowledge! Freezing!");
     while (!gy906.begin()) {
@@ -74,10 +72,12 @@ void rSetupGy906() {
       delay(100);
     }
   }
+  Serial.println("GY-906 IR thermometer acknowledged.");
   digitalWrite(gy906EnablePin, LOW);
 }
 
 void rSetupMax30105() {
+  digitalWrite(max30105EnablePin, HIGH);
   if (!max30105.begin()) {
     Serial.println("MAX30105 pulse oximeter did not acknowledge! Freezing!");
     while (!max30105.begin()) {
@@ -85,6 +85,8 @@ void rSetupMax30105() {
       delay(100);
     }
   }
+  Serial.println("MAX30105 pulse oximeter acknowledged.");
+  digitalWrite(max30105EnablePin, LOW);
 }
 
 void rSendHttpRequest(char payload[2048]) {
@@ -167,13 +169,14 @@ void setup() {
   pinMode(led, OUTPUT);
   pinMode(analogCalibrationPin, INPUT);
   pinMode(gy906EnablePin, OUTPUT);
+  pinMode(max30105EnablePin, OUTPUT);
 
   Wire.begin(sdaPin, sclPin);
 
   rSetupAd8232();
   rSetupGroveGsr();
   rSetupGy906();
-  // rSetupMax30105();
+  rSetupMax30105();
 
   // rSendHttpRequest("");
   initTime();
@@ -184,6 +187,52 @@ void loop() {
   delay(200); // Wait until sensor reaches proper 3.3V before reading.
   float gy906Temp = gy906.readObjectTempC();
   digitalWrite(gy906EnablePin, LOW);
+
+  delay(500);
+
+  digitalWrite(max30105EnablePin, HIGH);
+  delay(250);
+  max30105.setup();
+  max30105.setPulseAmplitudeRed(0x0A);
+  max30105.setPulseAmplitudeGreen(0);
+  delay(250);
+
+  long irValue = max30105.getIR();
+
+  if (irValue > 50000) {
+    //We sensed a beat!
+    long delta = millis() - lastBeat;
+    lastBeat = millis();
+
+    beatsPerMinute = 60 / (delta / 1000.0);
+
+    if (beatsPerMinute < 255 && beatsPerMinute > 20)
+    {
+      rates[rateSpot++] = (byte)beatsPerMinute; //Store this reading in the array
+      rateSpot %= RATE_SIZE; //Wrap variable
+
+      //Take average of readings
+      beatAvg = 0;
+      for (byte x = 0 ; x < RATE_SIZE ; x++)
+        beatAvg += rates[x];
+      beatAvg /= RATE_SIZE;
+    }
+  }
+
+  Serial.print("IR=");
+  Serial.print(irValue);
+  Serial.print(", BPM=");
+  Serial.print(beatsPerMinute);
+  Serial.print(", Avg BPM=");
+  Serial.print(beatAvg);
+
+  if (irValue < 50000)
+    Serial.print(" No finger?");
+
+  max30105.shutDown();
+
+  Serial.println();
+  digitalWrite(max30105EnablePin, LOW);
 
   digitalWrite(led, HIGH);
   delay(100);
@@ -254,45 +303,6 @@ void loop() {
   
   // rSendHttpRequest(data);
 
-  // max30105.setup();
-  // max30105.setPulseAmplitudeRed(0x0A);
-  // max30105.setPulseAmplitudeGreen(0);
-
-  // long irValue = max30105.getIR();
-
-  // if (irValue > 50000) {
-  //   //We sensed a beat!
-  //   long delta = millis() - lastBeat;
-  //   lastBeat = millis();
-
-  //   beatsPerMinute = 60 / (delta / 1000.0);
-
-  //   if (beatsPerMinute < 255 && beatsPerMinute > 20)
-  //   {
-  //     rates[rateSpot++] = (byte)beatsPerMinute; //Store this reading in the array
-  //     rateSpot %= RATE_SIZE; //Wrap variable
-
-  //     //Take average of readings
-  //     beatAvg = 0;
-  //     for (byte x = 0 ; x < RATE_SIZE ; x++)
-  //       beatAvg += rates[x];
-  //     beatAvg /= RATE_SIZE;
-  //   }
-  // }
-
-  // Serial.print("IR=");
-  // Serial.print(irValue);
-  // Serial.print(", BPM=");
-  // Serial.print(beatsPerMinute);
-  // Serial.print(", Avg BPM=");
-  // Serial.print(beatAvg);
-
-  // if (irValue < 50000)
-  //   Serial.print(" No finger?");
-
-  // max30105.shutDown();
-
-  // Serial.println();
 
   // byte error, address;
   // int nDevices;

@@ -19,6 +19,7 @@ int groveGsr = A0;
 
 // GY-906 Infrared Sensor
 Adafruit_MLX90614 gy906 = Adafruit_MLX90614();
+int gy906EnablePin = 10;
 
 // MAX30105 Pulse Oximeter
 MAX30105 max30105;
@@ -60,6 +61,7 @@ void rSetupGroveGsr() {
 }
 
 void rSetupGy906() {
+  digitalWrite(gy906EnablePin, HIGH);
   if (!gy906.begin()) {
     Serial.println("GY-906 IR thermometer did not acknowledge! Freezing!");
     while (!gy906.begin()) {
@@ -67,6 +69,7 @@ void rSetupGy906() {
       delay(100);
     }
   }
+  digitalWrite(gy906EnablePin, LOW);
 }
 
 void rSetupMax30105() {
@@ -158,11 +161,12 @@ void setup() {
   rWifi();
   pinMode(led, OUTPUT);
   pinMode(analogCalibrationPin, INPUT);
+  pinMode(gy906EnablePin, OUTPUT);
 
   rSetupAd8232();
   rSetupGroveGsr();
+  rSetupGy906();
   // rSetupMax30105();
-  // rSetupGy906();
 
   // rSendHttpRequest("");
   initTime();

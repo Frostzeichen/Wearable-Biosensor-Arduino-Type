@@ -88,6 +88,7 @@ void rSetupMax30105() {
   max30105.setup();
   max30105.setPulseAmplitudeRed(0x0A);
   max30105.setPulseAmplitudeGreen(0);
+  delay(2000);
 }
 
 void rSendHttpRequest(char payload[2048], bool verbose = false) {
@@ -210,7 +211,7 @@ bool i2cScanner(bool verbose = false) {
       Serial.println("No I2C devices found\n");
     return false;
   }
-  else if (nDevices != 3) {
+  else if (nDevices != 2) { // When adding a new I2C module, increment this by number of I2C devices added.
     if (verbose)
       Serial.println("Not all I2C devices found\n");
     return false;
@@ -235,18 +236,16 @@ void setup() {
 
   rSetupAd8232();
   rSetupGroveGsr();
-  rSetupGy906();
+  // rSetupGy906();
   rSetupMax30105();
   initTime();
 }
 
 void loop() {
-  float gy906Temp = -1;
+  // float gy906Temp = gy906.readObjectTempC();
   long irValue = -1;
 
   if (i2cScanner()) {
-    gy906Temp = gy906.readObjectTempC();
-
     irValue = max30105.getIR();
 
     if (irValue > 50000) {
@@ -276,9 +275,8 @@ void loop() {
   delay(100);
 
   char data[270];
-  // unsigned long now = getTime();
-  // Serial.println(now);
-  sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d, \"time\": %lu, \"gy906\": %f, \"max30105\": {\"ir\": %d, \"bpm\": %d, \"avg bpm\": %d}}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin), getTime(), gy906Temp, irValue, beatsPerMinute, beatAvg);
+  // sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d, \"time\": %lu, \"gy906\": %f, \"max30105\": {\"ir\": %d, \"bpm\": %d, \"avg bpm\": %d}}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin), getTime(), gy906Temp, irValue, beatsPerMinute, beatAvg);
+  sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d, \"time\": %lu, \"max30105\": {\"ir\": %d, \"bpm\": %d, \"avg bpm\": %d}}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin), getTime(), irValue, beatsPerMinute, beatAvg);
 
   if (readingsCount < 8) {
     strcpy(bReadings[readingsCount], data);
@@ -296,6 +294,7 @@ void loop() {
       bReadings[i][0] = '\0';
     }
 
+    // Uncomment this only when you need to encode jsonReadings into RFC 3986 compliant URL format.
     // int loc = 0;
     // while (true) {
     //   if (jsonReadings[loc] == '[') {
@@ -330,7 +329,7 @@ void loop() {
     // }
 
     Serial.println(jsonReadings);
-    rSendHttpRequest(jsonReadings);
+    // rSendHttpRequest(jsonReadings);
 
     readingsCount = 0;
   }

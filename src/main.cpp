@@ -162,8 +162,8 @@ void insertTwoChars(char *str, int pos, char a, char b, char c) {
   str[pos + 2] = c;
 }
 
-void i2cScanner() {
-    byte error, address;
+bool i2cScanner(bool verbose = false) {
+  byte error, address;
   int nDevices;
 
   Serial.println("Scanning...");
@@ -178,21 +178,40 @@ void i2cScanner() {
       if (address < 16)
         Serial.print("0");
       Serial.print(address, HEX);
+      if (verbose) {
+        Serial.print(" (acknowledged)");
+      }
       Serial.println("  !");
 
       nDevices++;
     }
     else if (error == 4) {
-      Serial.print("Unknown error at address 0x");
+      if (verbose) {
+        Serial.print("Unknown error at address 0x");
+        if (address < 16)
+          Serial.print("0");
+        Serial.println(address, HEX);
+      }
+    }
+    else if (verbose) {
+      Serial.print("No device found at address 0x");
       if (address < 16)
         Serial.print("0");
       Serial.println(address, HEX);
     }
   }
-  if (nDevices == 0)
+  if (nDevices == 0) {
     Serial.println("No I2C devices found\n");
-  else
+    return false;
+  }
+  else if (nDevices != 3) {
+    Serial.println("Not all I2C devices found\n");
+    return false;
+  }
+  else {
     Serial.println("done\n");
+    return true;
+  }
 }
 
 void setup() {
@@ -217,41 +236,34 @@ void setup() {
 }
 
 void loop() {
-  i2cScanner();
-  delay(2000);
-  float gy906Temp = gy906.readObjectTempC();
+  float gy906Temp = -1;
+  long irValue = -1;
 
-  long irValue = max30105.getIR();
+  if (i2cScanner()) {
+    gy906Temp = gy906.readObjectTempC();
 
-  if (irValue > 50000) {
-    //We sensed a beat!
-    long delta = millis() - lastBeat;
-    lastBeat = millis();
+    irValue = max30105.getIR();
 
-    beatsPerMinute = 60 / (delta / 1000.0);
+    if (irValue > 50000) {
+      //We sensed a beat!
+      long delta = millis() - lastBeat;
+      lastBeat = millis();
 
-    if (beatsPerMinute < 255 && beatsPerMinute > 20)
-    {
-      rates[rateSpot++] = (byte)beatsPerMinute; //Store this reading in the array
-      rateSpot %= RATE_SIZE; //Wrap variable
+      beatsPerMinute = 60 / (delta / 1000.0);
 
-      //Take average of readings
-      beatAvg = 0;
-      for (byte x = 0 ; x < RATE_SIZE ; x++)
-        beatAvg += rates[x];
-      beatAvg /= RATE_SIZE;
+      if (beatsPerMinute < 255 && beatsPerMinute > 20)
+      {
+        rates[rateSpot++] = (byte)beatsPerMinute; //Store this reading in the array
+        rateSpot %= RATE_SIZE; //Wrap variable
+
+        //Take average of readings
+        beatAvg = 0;
+        for (byte x = 0 ; x < RATE_SIZE ; x++)
+          beatAvg += rates[x];
+        beatAvg /= RATE_SIZE;
+      }
     }
   }
-
-  // Serial.print("IR=");
-  // Serial.print(irValue);
-  // Serial.print(", BPM=");
-  // Serial.print(beatsPerMinute);
-  // Serial.print(", Avg BPM=");
-  // Serial.print(beatAvg);
-
-  // if (irValue < 50000)
-  //   Serial.print(" No finger?");
 
   digitalWrite(led, HIGH);
   delay(100);

@@ -90,7 +90,7 @@ void rSetupMax30105() {
   max30105.setPulseAmplitudeGreen(0);
 }
 
-void rSendHttpRequest(char payload[2048]) {
+void rSendHttpRequest(char payload[2048], bool verbose = false) {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     WiFiClientSecure client;
@@ -98,12 +98,14 @@ void rSendHttpRequest(char payload[2048]) {
     client.setInsecure();
 
     http.begin(client, apiUrlEsrand); // Replace with your URL
-    Serial.println(apiUrlEsrand);
-    Serial.println(payload);
+    if (verbose) {
+      Serial.println(apiUrlEsrand);
+      Serial.println(payload);
+    }
     http.addHeader("Content-Type", "application/json");
     int httpResponseCode = http.POST((uint8_t*)payload, strlen(payload));
 
-    if (httpResponseCode > 0) {
+    if (httpResponseCode > 0 && verbose) {
       String payload = http.getString(); // Get the response payload
       Serial.println(httpResponseCode); // Print HTTP response code
       Serial.println(payload); // Print the response payload
@@ -166,7 +168,8 @@ bool i2cScanner(bool verbose = false) {
   byte error, address;
   int nDevices;
 
-  Serial.println("Scanning...");
+  if (verbose)
+    Serial.println("Scanning...");
 
   nDevices = 0;
   for (address = 1; address < 127; address++ ) {
@@ -174,14 +177,16 @@ bool i2cScanner(bool verbose = false) {
     error = Wire.endTransmission();
 
     if (error == 0) {
-      Serial.print("I2C device found at address 0x");
-      if (address < 16)
-        Serial.print("0");
-      Serial.print(address, HEX);
       if (verbose) {
-        Serial.print(" (acknowledged)");
+        Serial.print("I2C device found at address 0x");
+        if (address < 16)
+          Serial.print("0");
+        Serial.print(address, HEX);
+        if (verbose) {
+          Serial.print(" (acknowledged)");
+        }
+        Serial.println("  !");
       }
-      Serial.println("  !");
 
       nDevices++;
     }
@@ -201,11 +206,13 @@ bool i2cScanner(bool verbose = false) {
     }
   }
   if (nDevices == 0) {
-    Serial.println("No I2C devices found\n");
+    if (verbose)
+      Serial.println("No I2C devices found\n");
     return false;
   }
   else if (nDevices != 3) {
-    Serial.println("Not all I2C devices found\n");
+    if (verbose)
+      Serial.println("Not all I2C devices found\n");
     return false;
   }
   else {
@@ -230,8 +237,6 @@ void setup() {
   rSetupGroveGsr();
   rSetupGy906();
   rSetupMax30105();
-
-  // rSendHttpRequest("");
   initTime();
 }
 
@@ -325,44 +330,10 @@ void loop() {
     // }
 
     Serial.println(jsonReadings);
-    // rSendHttpRequest(jsonReadings);
+    rSendHttpRequest(jsonReadings);
 
     readingsCount = 0;
   }
 
   Serial.println();
-  
-  // rSendHttpRequest(data);
-
-
-  // byte error, address;
-  // int nDevices;
-  // Serial.println("Scanning...");
-  // nDevices = 0;
-  // for(address = 1; address < 127; address++ ) {
-  //   Wire.beginTransmission(address);
-  //   error = Wire.endTransmission();
-  //   if (error == 0) {
-  //     Serial.print("I2C device found at address 0x");
-  //     if (address<16) {
-  //       Serial.print("0");
-  //     }
-  //     Serial.println(address,HEX);
-  //     nDevices++;
-  //   }
-  //   else if (error==4) {
-  //     Serial.print("Unknow error at address 0x");
-  //     if (address<16) {
-  //       Serial.print("0");
-  //     }
-  //     Serial.println(address,HEX);
-  //   }    
-  // }
-  // if (nDevices == 0) {
-  //   Serial.println("No I2C devices found\n");
-  // }
-  // else {
-  //   Serial.println("done\n");
-  // }
-  // delay(5000);          
 }

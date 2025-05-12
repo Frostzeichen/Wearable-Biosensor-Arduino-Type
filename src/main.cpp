@@ -73,7 +73,6 @@ void rSetupGy906() {
     }
   }
   Serial.println("GY-906 IR thermometer acknowledged.");
-  digitalWrite(gy906EnablePin, LOW);
 }
 
 void rSetupMax30105() {
@@ -86,7 +85,9 @@ void rSetupMax30105() {
     }
   }
   Serial.println("MAX30105 pulse oximeter acknowledged.");
-  digitalWrite(max30105EnablePin, LOW);
+  max30105.setup();
+  max30105.setPulseAmplitudeRed(0x0A);
+  max30105.setPulseAmplitudeGreen(0);
 }
 
 void rSendHttpRequest(char payload[2048]) {
@@ -161,6 +162,39 @@ void insertTwoChars(char *str, int pos, char a, char b, char c) {
   str[pos + 2] = c;
 }
 
+void i2cScanner() {
+    byte error, address;
+  int nDevices;
+
+  Serial.println("Scanning...");
+
+  nDevices = 0;
+  for (address = 1; address < 127; address++ ) {
+    Wire.beginTransmission(address);
+    error = Wire.endTransmission();
+
+    if (error == 0) {
+      Serial.print("I2C device found at address 0x");
+      if (address < 16)
+        Serial.print("0");
+      Serial.print(address, HEX);
+      Serial.println("  !");
+
+      nDevices++;
+    }
+    else if (error == 4) {
+      Serial.print("Unknown error at address 0x");
+      if (address < 16)
+        Serial.print("0");
+      Serial.println(address, HEX);
+    }
+  }
+  if (nDevices == 0)
+    Serial.println("No I2C devices found\n");
+  else
+    Serial.println("done\n");
+}
+
 void setup() {
   Serial.begin(9600);
   delay(5000); // add delay for slow serial race condition
@@ -183,19 +217,9 @@ void setup() {
 }
 
 void loop() {
-  digitalWrite(gy906EnablePin, HIGH);
-  delay(200); // Wait until sensor reaches proper 3.3V before reading.
+  i2cScanner();
+  delay(2000);
   float gy906Temp = gy906.readObjectTempC();
-  digitalWrite(gy906EnablePin, LOW);
-
-  delay(500);
-
-  digitalWrite(max30105EnablePin, HIGH);
-  delay(250);
-  max30105.setup();
-  max30105.setPulseAmplitudeRed(0x0A);
-  max30105.setPulseAmplitudeGreen(0);
-  delay(250);
 
   long irValue = max30105.getIR();
 
@@ -219,20 +243,15 @@ void loop() {
     }
   }
 
-  Serial.print("IR=");
-  Serial.print(irValue);
-  Serial.print(", BPM=");
-  Serial.print(beatsPerMinute);
-  Serial.print(", Avg BPM=");
-  Serial.print(beatAvg);
+  // Serial.print("IR=");
+  // Serial.print(irValue);
+  // Serial.print(", BPM=");
+  // Serial.print(beatsPerMinute);
+  // Serial.print(", Avg BPM=");
+  // Serial.print(beatAvg);
 
-  if (irValue < 50000)
-    Serial.print(" No finger?");
-
-  max30105.shutDown();
-
-  Serial.println();
-  digitalWrite(max30105EnablePin, LOW);
+  // if (irValue < 50000)
+  //   Serial.print(" No finger?");
 
   digitalWrite(led, HIGH);
   delay(100);
@@ -242,7 +261,7 @@ void loop() {
   char data[270];
   // unsigned long now = getTime();
   // Serial.println(now);
-  sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d, \"time\": %lu, \"gy906\": %f}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin), getTime(), gy906Temp);
+  sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d, \"time\": %lu, \"gy906\": %f, \"max30105\": {\"ir\": %d, \"bpm\": %d, \"avg bpm\": %d}}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin), getTime(), gy906Temp, irValue, beatsPerMinute, beatAvg);
 
   if (readingsCount < 8) {
     strcpy(bReadings[readingsCount], data);

@@ -21,7 +21,7 @@ int groveGsr = A0;
 
 // GY-906 Infrared Sensor
 Adafruit_MLX90614 gy906 = Adafruit_MLX90614();
-int gy906EnablePin = 10;
+int gy906EnablePin = 9;
 
 // MAX30105 Pulse Oximeter
 int max30105EnablePin = 8;
@@ -88,7 +88,6 @@ void rSetupMax30105() {
   max30105.setup();
   max30105.setPulseAmplitudeRed(0x0A);
   max30105.setPulseAmplitudeGreen(0);
-  delay(2000);
 }
 
 void rSendHttpRequest(char payload[2048], bool verbose = false) {
@@ -104,9 +103,28 @@ void rSendHttpRequest(char payload[2048], bool verbose = false) {
       Serial.println(payload);
     }
     http.addHeader("Content-Type", "application/json");
+    http.addHeader("Authorization", bearerToken);
+    http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
     int httpResponseCode = http.POST((uint8_t*)payload, strlen(payload));
 
-    if (httpResponseCode > 0 && verbose) {
+    Serial.println(httpResponseCode);
+        // Handle 307 redirect manually
+    if (httpResponseCode == 307) {
+      String redirectUrl = http.header("Location"); // Get the new URL
+      http.end(); // End the previous session
+
+      if (verbose) {
+        Serial.print("Redirected to: ");
+        Serial.println(redirectUrl);
+      }
+
+      // Send the POST again to the new location
+      http.begin(client, redirectUrl);
+      http.addHeader("Content-Type", "application/json");
+      http.addHeader("Authorization", bearerToken);
+      httpResponseCode = http.POST((uint8_t*)payload, strlen(payload));
+    }
+    if (httpResponseCode == 200) {
       String payload = http.getString(); // Get the response payload
       Serial.println(httpResponseCode); // Print HTTP response code
       Serial.println(payload); // Print the response payload
@@ -227,56 +245,48 @@ void setup() {
   delay(5000); // add delay for slow serial race condition
 
   rWifi();
-  pinMode(led, OUTPUT);
+  // pinMode(led, OUTPUT);
   pinMode(analogCalibrationPin, INPUT);
-  pinMode(gy906EnablePin, OUTPUT);
+  // pinMode(gy906EnablePin, OUTPUT);
   pinMode(max30105EnablePin, OUTPUT);
 
   Wire.begin(sdaPin, sclPin);
 
   rSetupAd8232();
   rSetupGroveGsr();
-  // rSetupGy906();
+  rSetupGy906();
   rSetupMax30105();
   initTime();
 }
 
 void loop() {
-  // float gy906Temp = gy906.readObjectTempC();
-  long irValue = -1;
+  float gy906Temp = gy906.readObjectTempC();
+  // if (i2cScanner()) {
+  long irValue = max30105.getIR();
+  if (irValue > 50000) {
+    //We sensed a beat!
+    long delta = millis() - lastBeat;
+    lastBeat = millis();
 
-  if (i2cScanner()) {
-    irValue = max30105.getIR();
+    beatsPerMinute = 60 / (delta / 1000.0);
+    Serial.println(beatsPerMinute);
 
-    if (irValue > 50000) {
-      //We sensed a beat!
-      long delta = millis() - lastBeat;
-      lastBeat = millis();
-
-      beatsPerMinute = 60 / (delta / 1000.0);
-
-      if (beatsPerMinute < 255 && beatsPerMinute > 20)
-      {
-        rates[rateSpot++] = (byte)beatsPerMinute; //Store this reading in the array
-        rateSpot %= RATE_SIZE; //Wrap variable
-
-        //Take average of readings
-        beatAvg = 0;
-        for (byte x = 0 ; x < RATE_SIZE ; x++)
-          beatAvg += rates[x];
-        beatAvg /= RATE_SIZE;
-      }
+    if (beatsPerMinute < 255 && beatsPerMinute > 20) {
+      rates[rateSpot++] = (byte)beatsPerMinute; //Store this reading in the array
+      rateSpot %= RATE_SIZE; //Wrap variable
     }
   }
+  // }
 
-  digitalWrite(led, HIGH);
+  // digitalWrite(led, HIGH);
   delay(100);
-  digitalWrite(led, LOW);
+  Serial.println(".");
+  // digitalWrite(led, LOW);
   delay(100);
 
   char data[270];
-  // sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d, \"time\": %lu, \"gy906\": %f, \"max30105\": {\"ir\": %d, \"bpm\": %d, \"avg bpm\": %d}}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin), getTime(), gy906Temp, irValue, beatsPerMinute, beatAvg);
-  sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d, \"time\": %lu, \"max30105\": {\"ir\": %d, \"bpm\": %d, \"avg bpm\": %d}}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin), getTime(), irValue, beatsPerMinute, beatAvg);
+  sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d, \"time\": %lu, \"gy906\": %f, \"max30105\": {\"ir\": %d, \"bpm\": %f}}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin), getTime(), gy906Temp, irValue, beatsPerMinute);
+  // sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d, \"time\": %lu, \"max30105\": {\"ir\": %d, \"bpm\": %f}}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin), getTime(), irValue, beatsPerMinute);
 
   if (readingsCount < 8) {
     strcpy(bReadings[readingsCount], data);
@@ -329,7 +339,7 @@ void loop() {
     // }
 
     Serial.println(jsonReadings);
-    // rSendHttpRequest(jsonReadings);
+    rSendHttpRequest(jsonReadings, true);
 
     readingsCount = 0;
   }

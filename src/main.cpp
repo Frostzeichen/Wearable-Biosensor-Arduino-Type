@@ -260,6 +260,7 @@ void setup() {
 }
 
 void loop() {
+  int delayMs = 100;
   float gy906Temp = gy906.readObjectTempC();
   // if (i2cScanner()) {
   long irValue = max30105.getIR();
@@ -279,10 +280,10 @@ void loop() {
   // }
 
   // digitalWrite(led, HIGH);
-  delay(100);
+  delay(delayMs);
   Serial.println(".");
   // digitalWrite(led, LOW);
-  delay(100);
+  delay(delayMs);
 
   char data[270];
   sprintf(data, "{\"ad8232\": %d, \"groveGsr\": %d, \"analog calibration pin\": %d, \"time\": %lu, \"gy906\": %f, \"max30105\": {\"ir\": %d, \"bpm\": %f}}", sAd8232(), sGroveGsr(), analogRead(analogCalibrationPin), getTime(), gy906Temp, irValue, beatsPerMinute);

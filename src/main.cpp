@@ -269,7 +269,7 @@ void loop() {
     long delta = millis() - lastBeat;
     lastBeat = millis();
 
-    beatsPerMinute = 60 / (delta / 1000.0);
+    beatsPerMinute = 60 / (delta / (1000.0 / (7/14)));
     Serial.println(beatsPerMinute);
 
     if (beatsPerMinute < 255 && beatsPerMinute > 20) {

@@ -254,14 +254,15 @@ void setup() {
 
   rSetupAd8232();
   rSetupGroveGsr();
-  rSetupGy906();
+  // rSetupGy906();
   rSetupMax30105();
   initTime();
 }
 
 void loop() {
   int delayMs = 100;
-  float gy906Temp = gy906.readObjectTempC();
+  // float gy906Temp = gy906.readObjectTempC();
+  float gy906Temp = 0.00
   // if (i2cScanner()) {
   long irValue = max30105.getIR();
   if (irValue > 50000) {
@@ -269,7 +270,7 @@ void loop() {
     long delta = millis() - lastBeat;
     lastBeat = millis();
 
-    beatsPerMinute = 60 / (delta / 1000.0);
+    beatsPerMinute = 60 / (delta / (1000 / (7/14)));
     Serial.println(beatsPerMinute);
 
     if (beatsPerMinute < 255 && beatsPerMinute > 20) {
